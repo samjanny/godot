@@ -129,7 +129,11 @@ bool xatlas_mesh_lightmap_unwrap_callback(float p_texel_size, const float *p_ver
 		ERR_FAIL_COND_V_MSG(p_texel_size <= 0.0f, false, "Texel size must be greater than 0.");
 
 		xatlas::PackOptions pack_options;
-		pack_options.padding = 1;
+		// Every chart is padded on all sides, so neighboring charts end up 2 * padding texels apart. One texel is enough
+		// for bilinear lightmap sampling, which never reads past a chart's border texel. The bicubic lightmap filter (the
+		// LightmapGI default) also reads the texel next to it, and with only two texels between charts the bake's dilation
+		// can fill that texel from the neighboring chart, which then bleeds into this chart's edge.
+		pack_options.padding = 2;
 		pack_options.maxChartSize = 4094; // Lightmap atlassing needs 2 for padding between meshes, so 4096-2
 		pack_options.blockAlign = true;
 		pack_options.texelsPerUnit = 1.0 / p_texel_size;
